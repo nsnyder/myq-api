@@ -16,7 +16,7 @@ ErrorHandler.prototype.returnError = (returnCode, err) => {
 };
 ErrorHandler.prototype.handleBadResponse = (response) => {
   // TODO: Handle these granularly.
-  return this.prototype.returnError(11);
+  return ErrorHandler.prototype.returnError(11);
 };
 
 class MyQ {
