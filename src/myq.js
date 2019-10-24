@@ -28,7 +28,7 @@ class MyQ {
     this.securityToken = null;
   }
 
-  async login() {
+  login() {
     if (!this.username || !this.password) {
       return Promise.resolve(ErrorHandler.prototype.returnError(14));
     }
@@ -81,7 +81,7 @@ class MyQ {
     );
   }
 
-  async executeRequest(route, method, params, data) {
+  executeRequest(route, method, params, data) {
     let isLoginRequest = route === constants.routes.login;
     let headers = {
       "Content-Type": "application/json",
@@ -119,7 +119,7 @@ class MyQ {
     );
   }
 
-  async getAccountInfo() {
+  getAccountInfo() {
     return this.executeRequest(
       constants.routes.account,
       'get',
@@ -134,7 +134,7 @@ class MyQ {
       .catch((error) => ErrorHandler.prototype.returnError(11, error));
   }
 
-  async getDevices(deviceTypeParams) {
+  getDevices(deviceTypeParams) {
     if (deviceTypeParams === null) {
       return Promise.resolve(ErrorHandler.prototype.returnError(15));
     }
@@ -207,7 +207,7 @@ class MyQ {
       .catch(err => ErrorHandler.prototype.returnError(11, err));
   }
 
-  async getDeviceState(serialNumber, attributeName) {
+  getDeviceState(serialNumber, attributeName) {
     return this.getDevices()
       .then(response => {
         const device = (response.devices || []).find(device => device.serialNumber === serialNumber);
@@ -232,7 +232,7 @@ class MyQ {
       });
   };
 
-  async getDoorState(serialNumber) {
+  getDoorState(serialNumber) {
     return this.getDeviceState(serialNumber, 'doorState')
       .then(result => {
         if (result.returnCode !== 0) {
@@ -247,7 +247,7 @@ class MyQ {
       .catch(err => ErrorHandler.prototype.returnError(11, err));
   }
 
-  async getLightState(serialNumber) {
+  getLightState(serialNumber) {
     return this.getDeviceState(serialNumber, 'lightState')
       .then(result => {
         if (result.returnCode !== 0) {
@@ -262,7 +262,7 @@ class MyQ {
       .catch(err => ErrorHandler.prototype.returnError(11, err));
   }
 
-  async setDeviceState(serialNumber, action) {
+  setDeviceState(serialNumber, action) {
     return this.executeRequest(
       `${constants.routes.setDevice.replace('{accountId}', this.accountId).replace('{serialNumber}', serialNumber)}`,
       'put',
@@ -297,12 +297,12 @@ class MyQ {
       });
   };
 
-  async setDoorState(serialNumber, action) {
+  setDoorState(serialNumber, action) {
     return this.setDeviceState(serialNumber, action)
       .then(result => result);
   }
 
-  async setLightState(serialNumber, action) {
+  setLightState(serialNumber, action) {
     return this.setDeviceState(serialNumber, action)
       .then(result => result);
   }
