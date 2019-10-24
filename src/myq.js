@@ -3,7 +3,8 @@ const axios = require('axios');
 
 const constants = require('./constants');
 
-const returnError = (returnCode, err) => {
+class ErrorHandler {};
+ErrorHandler.prototype.returnError = (returnCode, err) => {
   const result = {
     returnCode,
     message: constants.errorMessages[returnCode],
@@ -13,192 +14,162 @@ const returnError = (returnCode, err) => {
   }
   return result;
 };
-
-const getDeviceState = (securityToken, id, attributeName) => {
-  if (!securityToken) {
-    return Promise.resolve(returnError(13));
-  }
-
-  return axios({
-    method: 'get',
-    url: `${constants.endpoint}/api/v4/deviceattribute/getdeviceattribute`,
-    headers: {
-      MyQApplicationId: constants.appId,
-      SecurityToken: securityToken,
-    },
-    params: {
-      MyQDeviceId: id,
-      AttributeName: attributeName,
-    },
-  })
-    .then(response => {
-      if (!response || !response.data) {
-        return returnError(12);
-      }
-
-      const { data } = response;
-
-      if (data.ReturnCode === '-3333') {
-        return returnError(13);
-      } else if (!data.ReturnCode) {
-        return returnError(11);
-      } else if (!data.AttributeValue) {
-        return returnError(15);
-      }
-
-      const state = parseInt(data.AttributeValue, 10);
-      const result = {
-        returnCode: 0,
-        state,
-      };
-      return result;
-    })
-    .catch(err => {
-      if (err.statusCode === 400) {
-        return returnError(15);
-      }
-
-      return returnError(11, err);
-    });
-};
-
-const setDeviceState = (securityToken, id, toggle, attributeName) => {
-  if (!securityToken) {
-    return Promise.resolve(returnError(13));
-  } else if (toggle !== 0 && toggle !== 1) {
-    return Promise.resolve(returnError(15));
-  }
-
-  return axios({
-    method: 'put',
-    url: `${constants.endpoint}/api/v4/deviceattribute/putdeviceattribute`,
-    headers: {
-      MyQApplicationId: constants.appId,
-      SecurityToken: securityToken,
-    },
-    data: {
-      MyQDeviceId: id,
-      AttributeName: attributeName,
-      AttributeValue: toggle,
-    },
-  })
-    .then(response => {
-      if (!response || !response.data) {
-        return returnError(12);
-      }
-
-      const { data } = response;
-
-      if (data.ReturnCode === '-3333') {
-        return returnError(13);
-      } else if (!data.ReturnCode) {
-        return returnError(11);
-      }
-
-      const result = {
-        returnCode: 0,
-      };
-      return result;
-    })
-    .catch(err => {
-      if (err.statusCode === 500) {
-        return returnError(15);
-      }
-
-      return returnError(11, err);
-    });
+ErrorHandler.prototype.handleBadResponse = (response) => {
+  // TODO: Handle these granularly.
+  return this.prototype.returnError(11);
 };
 
 class MyQ {
+  // Build the object and initialize any properties we're going to use.
   constructor(username, password) {
+    this.accountId = null;
     this.username = username;
     this.password = password;
+    this.securityToken = null;
   }
 
-  login() {
+  async login() {
     if (!this.username || !this.password) {
-      return Promise.resolve(returnError(14));
+      return Promise.resolve(ErrorHandler.prototype.returnError(14));
     }
 
-    return axios({
-      method: 'post',
-      url: `${constants.endpoint}/api/v4/User/Validate`,
-      headers: {
-        MyQApplicationId: constants.appId,
-      },
-      data: {
-        username: this.username,
-        password: this.password,
-      },
-    })
-      .then(response => {
-        if (!response || !response.data) {
-          return returnError(12);
+    return Promise.resolve(
+      this.executeRequest(
+        constants.routes.login,
+        'post',
+        null,
+        {
+          Username: this.username,
+          Password: this.password,
         }
+      )
+        .then(response => {
+          //console.log(response);
+          if (!response || !response.data) {
+            return ErrorHandler.prototype.returnError(12);
+          }
 
-        const { data } = response;
+          const { data } = response;
+          switch (response.status) {
+            case 200:
+              const token = data.SecurityToken;
+              if (!token) {
+                return ErrorHandler.prototype.returnError(11);
+              }
 
-        if (data.ReturnCode === '203') {
-          return returnError(14);
-        } else if (data.ReturnCode === '205') {
-          return returnError(16);
-        } else if (data.ReturnCode === '207') {
-          return returnError(17);
-        } else if (!data.SecurityToken) {
-          return returnError(11);
-        }
+              this.securityToken = token;
+              return {
+                returnCode: 0,
+                token: data.SecurityToken,
+              };
+            case 203:
+              return ErrorHandler.prototype.returnError(14);
+            case 205:
+              return ErrorHandler.prototype.returnError(16);
+            case 207:
+              return ErrorHandler.prototype.returnError(17);
+            default:
+              return ErrorHandler.prototype.returnError(11);
+          }
+        })
+        .catch(err => {
+          if (err.statusCode === 500) {
+            return ErrorHandler.prototype.returnError(14);
+          }
 
-        this.securityToken = data.SecurityToken;
-        const result = {
-          returnCode: 0,
-          token: data.SecurityToken,
-        };
-        return result;
-      })
-      .catch(err => {
-        if (err.statusCode === 500) {
-          return returnError(14);
-        }
-
-        return returnError(11, err);
-      });
+          return ErrorHandler.prototype.returnError(11, err);
+        })
+    );
   }
 
-  getDevices(typeIdParams) {
-    if (!this.securityToken) {
-      return Promise.resolve(returnError(13));
-    } else if (typeIdParams === null) {
-      return Promise.resolve(returnError(15));
+  async executeRequest(route, method, params, data) {
+    let isLoginRequest = route === constants.routes.login;
+    let headers = {
+      "Content-Type": "application/json",
+      "MyQApplicationId": constants.appId,
+      "User-Agent": constants.userAgent,
+    };
+
+    // If there's not a security token, and we're not logging in, throw an error.
+    if (!isLoginRequest && !this.securityToken) {
+      return Promise.resolve(ErrorHandler.prototype.returnError(13));
+    } else if (!isLoginRequest) {
+      // Add our security token to the headers.
+      headers.SecurityToken = this.securityToken;
+    }
+    let config = {
+      method,
+      url: `${constants.endpointBase}/${route}`,
+      headers,
+    };
+    if (!!data) {
+      config.data = data;
+    }
+    if (!!params) {
+      config.params = params;
     }
 
-    const typeIds = Array.isArray(typeIdParams) ? typeIdParams : [typeIdParams];
+    return Promise.resolve(
+      axios(config)
+        .then(response => {
+          if (response.status !== 200) {
+            return ErrorHandler.prototype.handleBadResponse(response);
+          }
+          return response;
+        })
+    );
+  }
 
-    for (let i = 0; i < typeIds.length; i += 1) {
-      const typeId = typeIds[i];
-      if (!constants.allTypeIds.includes(typeId)) {
-        return returnError(15);
+  async getAccountInfo() {
+    return this.executeRequest(
+      constants.routes.account,
+      'get',
+      { expand: 'account' }
+    )
+      .then(({ data }) => {
+        if (!data || !data.Account || !data.Account.Id) {
+          return ErrorHandler.prototype.returnError(11);
+        }
+        this.accountId = data.Account.Id;
+      })
+      .catch((error) => ErrorHandler.prototype.returnError(11, error));
+  }
+
+  async getDevices(deviceTypeParams) {
+    if (deviceTypeParams === null) {
+      return Promise.resolve(ErrorHandler.prototype.returnError(15));
+    }
+
+    let promise = Promise.resolve(() => null);
+    if (!this.accountId) {
+      promise = Promise.resolve(this.getAccountInfo());
+    }
+
+    const deviceTypes = !deviceTypeParams ?
+      [] :
+      (Array.isArray(deviceTypeParams) ? deviceTypeParams : [deviceTypeParams]);
+
+    // TODO: Validate device types when we have a more complete list.
+    for (let deviceType in deviceTypes) {
+      if (!constants.allDeviceTypes.includes(deviceType)) {
+        // return ErrorHandler.prototype.returnError(15);
       }
     }
 
-    return axios({
-      method: 'get',
-      url: `${constants.endpoint}/api/v4/userdevicedetails/get`,
-      headers: {
-        MyQApplicationId: constants.appId,
-        securityToken: this.securityToken,
-      },
-    })
-      .then(response => {
-        if (!response || !response.data) {
-          return returnError(12);
+    return promise
+      .then(() => this.executeRequest(
+        `${constants.routes.getDevices.replace('{accountId}', this.accountId)}`,
+        'get'
+      ))
+      .then((response) => {
+        const { data } = response;
+        let devices = data.items;
+        if (!devices) {
+          return ErrorHandler.prototype.returnError(11);
         }
 
-        const { data } = response;
-
-        if (data.ReturnCode === '-3333') {
-          return returnError(13);
-        } else if (!data.Devices) {
-          return returnError(11);
+        if (deviceTypes.length) {
+          devices = devices.filter(device => deviceTypes.includes(device.device_type));
         }
 
         const result = {
@@ -206,44 +177,64 @@ class MyQ {
         };
 
         const modifiedDevices = [];
-        for (let i = 0; i < data.Devices.length; i += 1) {
-          const device = data.Devices[i];
-          if (typeIds.includes(device.MyQDeviceTypeId)) {
-            const modifiedDevice = {
-              id: device.MyQDeviceId,
-              typeId: device.MyQDeviceTypeId,
-              typeName: device.MyQDeviceTypeName,
-              serialNumber: device.SerialNumber,
-            };
-            for (let j = 0; j < device.Attributes.length; j += 1) {
-              const attribute = device.Attributes[j];
-              if (attribute.AttributeDisplayName === 'online') {
-                modifiedDevice.online = attribute.Value === 'True';
-              } else if (attribute.AttributeDisplayName === 'desc') {
-                modifiedDevice.name = attribute.Value;
-              } else if (attribute.AttributeDisplayName === 'doorstate') {
-                modifiedDevice.doorState = parseInt(attribute.Value, 10);
-                modifiedDevice.doorStateDescription =
-                  constants.doorStates[modifiedDevice.doorState];
-                modifiedDevice.doorStateUpdated = parseInt(attribute.UpdatedTime, 10);
-              } else if (attribute.AttributeDisplayName === 'lightstate') {
-                modifiedDevice.lightState = parseInt(attribute.Value, 10);
-                modifiedDevice.lightStateDescription =
-                  constants.lightStates[modifiedDevice.lightState];
-                modifiedDevice.lightStateUpdated = parseInt(attribute.UpdatedTime, 10);
-              }
-            }
-            modifiedDevices.push(modifiedDevice);
+        for (const device of devices) {
+          const modifiedDevice = {
+            family: device.device_family,
+            name: device.name,
+            type: device.device_type,
+            serialNumber: device.serial_number,
+          };
+
+          const state = device.state;
+          if (constants.myQProperties.online in state) {
+            modifiedDevice.online = state[constants.myQProperties.online];
           }
+          if (constants.myQProperties.doorState in state) {
+            modifiedDevice.doorState = state[constants.myQProperties.doorState];
+            const date = new Date(state[constants.myQProperties.lastUpdate]);
+            modifiedDevice.doorStateUpdated = date.toLocaleString();
+          }
+          if (constants.myQProperties.lightState in state) {
+            modifiedDevice.lightState = state[constants.myQProperties.lightState];
+            const date = new Date(state[constants.myQProperties.lastUpdate]);
+            modifiedDevice.lightStateUpdated = date.toLocaleString();
+          }
+
+          modifiedDevices.push(modifiedDevice);
         }
         result.devices = modifiedDevices;
         return result;
       })
-      .catch(err => returnError(11, err));
+      .catch(err => ErrorHandler.prototype.returnError(11, err));
   }
 
-  getDoorState(id) {
-    return getDeviceState(this.securityToken, id, 'doorstate')
+  async getDeviceState(serialNumber, attributeName) {
+    return this.getDevices()
+      .then(response => {
+        const device = (response.devices || []).find(device => device.serialNumber === serialNumber);
+        if (!device) {
+          return ErrorHandler.prototype.returnError(18);
+        } else if (!(attributeName in device)) {
+          return ErrorHandler.prototype.returnError(19);
+        }
+
+        const result = {
+          returnCode: 0,
+          state: device[attributeName],
+        };
+        return result;
+      })
+      .catch(err => {
+        if (err.statusCode === 400) {
+          return ErrorHandler.prototype.returnError(15);
+        }
+
+        return ErrorHandler.prototype.returnError(11, err);
+      });
+  };
+
+  async getDoorState(serialNumber) {
+    return this.getDeviceState(serialNumber, 'doorState')
       .then(result => {
         if (result.returnCode !== 0) {
           return result;
@@ -251,15 +242,14 @@ class MyQ {
 
         const newResult = JSON.parse(JSON.stringify(result));
         newResult.doorState = newResult.state;
-        newResult.doorStateDescription = constants.doorStates[newResult.doorState];
         delete newResult.state;
         return newResult;
       })
-      .catch(err => returnError(11, err));
+      .catch(err => ErrorHandler.prototype.returnError(11, err));
   }
 
-  getLightState(id) {
-    return getDeviceState(this.securityToken, id, 'lightstate')
+  async getLightState(serialNumber) {
+    return this.getDeviceState(serialNumber, 'lightState')
       .then(result => {
         if (result.returnCode !== 0) {
           return result;
@@ -267,23 +257,55 @@ class MyQ {
 
         const newResult = JSON.parse(JSON.stringify(result));
         newResult.lightState = newResult.state;
-        newResult.lightStateDescription = constants.lightStates[newResult.lightState];
         delete newResult.state;
         return newResult;
       })
-      .catch(err => returnError(11, err));
+      .catch(err => ErrorHandler.prototype.returnError(11, err));
   }
 
-  setDoorState(id, toggle) {
-    return setDeviceState(this.securityToken, id, toggle, 'desireddoorstate')
-      .then(result => result)
-      .catch(err => returnError(11, err));
+  async setDeviceState(serialNumber, action) {
+    return this.executeRequest(
+      `${constants.routes.setDevice.replace('{accountId}', this.accountId).replace('{serialNumber}', serialNumber)}`,
+      'put',
+      null,
+      { action_type: action }
+    )
+      .then(response => {
+        console.log(response);
+        if (!response || !response.data) {
+          return ErrorHandler.prototype.returnError(12);
+        }
+
+        const { data } = response;
+
+        if (data.ReturnCode === '-3333') {
+          return ErrorHandler.prototype.returnError(13);
+        } else if (!data.ReturnCode) {
+          return ErrorHandler.prototype.returnError(11);
+        }
+
+        const result = {
+          returnCode: 0,
+        };
+        return result;
+      })
+      .catch(err => {
+        if (err.statusCode === 500) {
+          return ErrorHandler.prototype.returnError(15);
+        }
+
+        return ErrorHandler.prototype.returnError(11, err);
+      });
+  };
+
+  async setDoorState(serialNumber, action) {
+    return this.setDeviceState(serialNumber, action)
+      .then(result => result);
   }
 
-  setLightState(id, toggle) {
-    return setDeviceState(this.securityToken, id, toggle, 'desiredlightstate')
-      .then(result => result)
-      .catch(err => returnError(11, err));
+  async setLightState(serialNumber, action) {
+    return this.setDeviceState(serialNumber, action)
+      .then(result => result);
   }
 }
 

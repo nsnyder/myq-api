@@ -53,11 +53,11 @@ Returns devices on the account.
 
 | Parameter | Required | Type    | Details |
 |-----------|----------|---------|---------|
-| typeIds   | true     | Type ID | Either an array of Type IDs or a singular Type ID. See Possible Values for more info |
+| typeIds   | false     | Type ID | Either an array of Type IDs or a singular Type ID. See Possible Values for more info |
 
 Example code:
 ```js
-account.getDevices([3, 15, 17])
+account.getDevices(['hub', 'virtualgaragedooropener'])
   .then(function (result) {
     console.log(result);
   }).catch(function (err) {
@@ -211,6 +211,15 @@ Example returned object if call is successful:
 ```
 
 ## Possible Values
+
+This is a (partial) list of the types of devices that MyQ supports.
+MyQ no longer returns on Type IDs, but rather, returns (mostly) human-readable strings.
+Pull requests are welcome to add other device types :)
+
+| Types                                    |
+|------------------------------------------|
+| virtualgaragedooropener                  |
+| hub                                      |
 
 | Type ID | Description                    |
 |---------|--------------------------------|
