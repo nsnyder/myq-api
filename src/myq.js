@@ -44,7 +44,6 @@ class MyQ {
         }
       )
         .then(response => {
-          //console.log(response);
           if (!response || !response.data) {
             return ErrorHandler.prototype.returnError(12);
           }
