@@ -12,11 +12,18 @@ ErrorHandler.prototype.returnError = (returnCode, err) => {
   if (err) {
     result.unhandledError = err;
   }
-  return result;
+  return Promise.resolve(result);
 };
-ErrorHandler.prototype.handleBadResponse = (response) => {
-  // TODO: Handle these granularly.
-  return ErrorHandler.prototype.returnError(11);
+ErrorHandler.prototype.parseBadResponse = (response) => {
+  let error = ErrorHandler.prototype.returnError(11);
+  if (!response || !response.status) {
+    error = ErrorHandler.prototype.returnError(12);
+  }
+  if (response.status === 401) {
+    return ErrorHandler.prototype.returnError(14);
+  }
+
+  return error;
 };
 
 class MyQ {
@@ -30,7 +37,7 @@ class MyQ {
 
   login() {
     if (!this.username || !this.password) {
-      return Promise.resolve(ErrorHandler.prototype.returnError(14));
+      return ErrorHandler.prototype.returnError(14);
     }
 
     return Promise.resolve(
@@ -71,14 +78,15 @@ class MyQ {
               return ErrorHandler.prototype.returnError(11);
           }
         })
-        .catch(err => {
-          if (err.statusCode === 500) {
-            return ErrorHandler.prototype.returnError(14);
-          }
-
-          return ErrorHandler.prototype.returnError(11, err);
+        .catch(error => {
+          const { response } = error;
+          return ErrorHandler.prototype.parseBadResponse(response);
         })
     );
+  }
+
+  checkIsLoggedIn() {
+    return !!this.securityToken;
   }
 
   executeRequest(route, method, params, data) {
@@ -91,7 +99,7 @@ class MyQ {
 
     // If there's not a security token, and we're not logging in, throw an error.
     if (!isLoginRequest && !this.securityToken) {
-      return Promise.resolve(ErrorHandler.prototype.returnError(13));
+      return ErrorHandler.prototype.returnError(13);
     } else if (!isLoginRequest) {
       // Add our security token to the headers.
       headers.SecurityToken = this.securityToken;
@@ -108,15 +116,11 @@ class MyQ {
       config.params = params;
     }
 
-    return Promise.resolve(
-      axios(config)
-        .then(response => {
-          if (response.status !== 200) {
-            return ErrorHandler.prototype.handleBadResponse(response);
-          }
-          return response;
-        })
-    );
+    return Promise.resolve(axios(config))
+      .then(response => ({
+        returnCode: 0,
+        response,
+      }));
   }
 
   getAccountInfo() {
@@ -125,7 +129,11 @@ class MyQ {
       'get',
       { expand: 'account' }
     )
-      .then(({ data }) => {
+      .then(returnValue => {
+        if (returnValue.returnCode !== 0 && typeof(returnValue.returnCode) !== 'undefined') {
+          return returnValue;
+        }
+        const { data } = returnValue.response;
         if (!data || !data.Account || !data.Account.Id) {
           return ErrorHandler.prototype.returnError(11);
         }
@@ -135,10 +143,6 @@ class MyQ {
   }
 
   getDevices(deviceTypeParams) {
-    if (deviceTypeParams === null) {
-      return Promise.resolve(ErrorHandler.prototype.returnError(15));
-    }
-
     let promise = Promise.resolve(() => null);
     if (!this.accountId) {
       promise = Promise.resolve(this.getAccountInfo());
@@ -160,8 +164,16 @@ class MyQ {
         `${constants.routes.getDevices.replace('{accountId}', this.accountId)}`,
         'get'
       ))
-      .then((response) => {
-        const { data } = response;
+      .then(returnValue => {
+        if (returnValue.returnCode !== 0 && typeof(returnValue.returnCode) !== 'undefined') {
+          return returnValue;
+        }
+
+        if (![200, 204].includes(returnValue.status)) {
+          return ErrorHandler.prototype.parseBadResponse(returnValue.response);
+        }
+
+        const { data } = returnValue;
         let devices = data.items;
         if (!devices) {
           return ErrorHandler.prototype.returnError(11);
@@ -263,30 +275,31 @@ class MyQ {
   }
 
   setDeviceState(serialNumber, action) {
-    return this.executeRequest(
-      `${constants.routes.setDevice.replace('{accountId}', this.accountId).replace('{serialNumber}', serialNumber)}`,
-      'put',
-      null,
-      { action_type: action }
-    )
-      .then(response => {
-        console.log(response);
-        if (!response || !response.data) {
-          return ErrorHandler.prototype.returnError(12);
+    let promise = Promise.resolve(() => null);
+    if (!this.accountId) {
+      promise = Promise.resolve(this.getAccountInfo());
+    }
+
+    return promise
+      .then(() => this.executeRequest(
+        `${constants.routes.setDevice.replace('{accountId}', this.accountId).replace('{serialNumber}', serialNumber)}`,
+        'put',
+        null,
+        { action_type: action }
+      ))
+      .then(returnValue => {
+        const { returnCode, response } = returnValue;
+        if (returnCode !== 0 && typeof(returnCode) !== 'undefined') {
+          return returnValue;
         }
 
-        const { data } = response;
-
-        if (data.ReturnCode === '-3333') {
-          return ErrorHandler.prototype.returnError(13);
-        } else if (!data.ReturnCode) {
-          return ErrorHandler.prototype.returnError(11);
+        if ([200, 204].includes(response.status)) {
+          return {
+            returnCode: 0,
+          };
         }
 
-        const result = {
-          returnCode: 0,
-        };
-        return result;
+        return ErrorHandler.prototype.parseBadResponse(response);
       })
       .catch(err => {
         if (err.statusCode === 500) {
@@ -297,14 +310,20 @@ class MyQ {
       });
   };
 
-  setDoorState(serialNumber, action) {
-    return this.setDeviceState(serialNumber, action)
-      .then(result => result);
+  setDoorOpen(serialNumber, shouldOpen) {
+    let action = constants.doorCommands.close;
+    if (shouldOpen) {
+      action = constants.doorCommands.open;
+    }
+    return this.setDeviceState(serialNumber, action);
   }
 
-  setLightState(serialNumber, action) {
-    return this.setDeviceState(serialNumber, action)
-      .then(result => result);
+  setLightState(serialNumber, turnOn) {
+    let action = constants.lightCommands.off;
+    if (turnOn) {
+      action = constants.lightCommands.on;
+    }
+    return this.setDeviceState(serialNumber, action);
   }
 }
 
