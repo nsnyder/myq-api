@@ -29,7 +29,7 @@ const constants = {
     9: 'not closed',
   },
   lightCommands: {
-    on: 'on'
+    on: 'on',
     off: 'off',
   },
   lightStates: {
