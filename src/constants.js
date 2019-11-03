@@ -1,7 +1,6 @@
 const constants = {
   endpointBase: 'https://api.myqdevice.com/api/v5',
   appId: 'JVM/G9Nwih5BwKgNCjLxiFUQxQijAebyyg8QUHr7JOrP+tuPb8iHfRHKwTmDzHOu',
-  userAgent: 'Chamberlain/3.73',
   allDeviceTypes: [
     'hub',
     'virtualgaragedooropener',
@@ -30,7 +29,7 @@ const constants = {
     9: 'not closed',
   },
   lightCommands: {
-    on: 'on',
+    on: 'on'
     off: 'off',
   },
   lightStates: {

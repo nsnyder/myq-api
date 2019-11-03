@@ -4,23 +4,33 @@ const axios = require('axios');
 const constants = require('./constants');
 
 class ErrorHandler {};
-ErrorHandler.prototype.returnError = (returnCode, err) => {
+ErrorHandler.prototype.returnError = (returnCode, error, response) => {
   const result = {
     returnCode,
     message: constants.errorMessages[returnCode],
+    providerMessage: null,
+    unhandledError: null,
   };
-  if (err) {
-    result.unhandledError = err;
+  if (response && response.description) {
+    result.providerMessage = response.description;
+  }
+  if (error) {
+    result.unhandledError = error;
   }
   return Promise.resolve(result);
 };
 ErrorHandler.prototype.parseBadResponse = (response) => {
-  let error = ErrorHandler.prototype.returnError(11);
-  if (!response || !response.status) {
-    error = ErrorHandler.prototype.returnError(12);
+  if (!response) {
+    return ErrorHandler.prototype.returnError(12, null, response);
   }
-  if (response.status === 401) {
-    return ErrorHandler.prototype.returnError(14);
+
+  const { data, status } = response;
+  let error = ErrorHandler.prototype.returnError(11, null, data);
+  if (!status) {
+    error = ErrorHandler.prototype.returnError(12, null, data);
+  }
+  if (status === 401) {
+    return ErrorHandler.prototype.returnError(14, null, data);
   }
 
   return error;
@@ -50,7 +60,11 @@ class MyQ {
           Password: this.password,
         }
       )
-        .then(response => {
+        .then(originalResponse => {
+          const { response, returnCode } = originalResponse;
+          if (returnCode !== 0) {
+            throw originalResponse;
+          }
           if (!response || !response.data) {
             return ErrorHandler.prototype.returnError(12);
           }
@@ -68,14 +82,8 @@ class MyQ {
                 returnCode: 0,
                 token: data.SecurityToken,
               };
-            case 203:
-              return ErrorHandler.prototype.returnError(14);
-            case 205:
-              return ErrorHandler.prototype.returnError(16);
-            case 207:
-              return ErrorHandler.prototype.returnError(17);
             default:
-              return ErrorHandler.prototype.returnError(11);
+              throw originalResponse;
           }
         })
         .catch(error => {
@@ -94,7 +102,6 @@ class MyQ {
     let headers = {
       "Content-Type": "application/json",
       "MyQApplicationId": constants.appId,
-      "User-Agent": constants.userAgent,
     };
 
     // If there's not a security token, and we're not logging in, throw an error.
@@ -169,11 +176,11 @@ class MyQ {
           return returnValue;
         }
 
-        if (![200, 204].includes(returnValue.status)) {
+        const { response: { data, status } } = returnValue;
+        if (![200, 204].includes(status)) {
           return ErrorHandler.prototype.parseBadResponse(returnValue.response);
         }
 
-        const { data } = returnValue;
         let devices = data.items;
         if (!devices) {
           return ErrorHandler.prototype.returnError(11);
