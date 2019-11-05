@@ -45,9 +45,9 @@ const constants = {
   },
   routes: {
     account: 'My',
-    getDevices: 'oAccounts/{accountId}/Devices',
+    getDevices: 'Accounts/{accountId}/Devices',
     login: 'Login',
-    setDevice: 'oAccounts/{accountId}/Devices/{serialNumber}/actions'
+    setDevice: 'Accounts/{accountId}/Devices/{serialNumber}/actions'
   }
 };
 
