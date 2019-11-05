@@ -188,10 +188,10 @@ Example returned object if call is successful:
 
 Set the requested light to on or off. Returns a confirmation once complete.
 
-| Parameter | Required | Type         | Details                           |
-|-----------|----------|--------------|-----------------------------------|
-| id        | true     | Integer      | Light ID                          |
-| toggle    | true     | Light Toggle | See Possible Values for more info |
+| Parameter     | Required | Type         | Details                               |
+|---------------|----------|--------------|---------------------------------------|
+| serialNumber  | true     | String       | Light Serial Number                   |
+| turnOn        | true     | Boolean      | Whether the light should be on or off |
 
 Example code:
 ```js

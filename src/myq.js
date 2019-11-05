@@ -20,20 +20,35 @@ ErrorHandler.prototype.returnError = (returnCode, error, response) => {
   return Promise.resolve(result);
 };
 ErrorHandler.prototype.parseBadResponse = (response) => {
+  console.log(response);
   if (!response) {
     return ErrorHandler.prototype.returnError(12, null, response);
   }
 
   const { data, status } = response;
-  let error = ErrorHandler.prototype.returnError(11, null, data);
   if (!status) {
-    error = ErrorHandler.prototype.returnError(12, null, data);
+    return ErrorHandler.prototype.returnError(12, null, data);
   }
-  if (status === 401) {
+  if (status === 500) {
+    return ErrorHandler.prototype.returnError(15);
+  }
+  if ([400, 401].includes(status)) {
+    if (data.code === '401.205') {
+      return ErrorHandler.prototype.returnError(16, null, data);
+    }
+    if (data.code === '401.207') {
+      return ErrorHandler.prototype.returnError(17, null, data);
+    }
     return ErrorHandler.prototype.returnError(14, null, data);
   }
+  if (status === 404) {
+    if (data.code === '404.401') {
+      return ErrorHandler.prototype.returnError(18, null, data);
+    }
+    return ErrorHandler.prototype.returnError(20);
+  }
 
-  return error;
+  return ErrorHandler.prototype.returnError(11, null, data);
 };
 
 class MyQ {
@@ -86,10 +101,7 @@ class MyQ {
               throw originalResponse;
           }
         })
-        .catch(error => {
-          const { response } = error;
-          return ErrorHandler.prototype.parseBadResponse(response);
-        })
+        .catch(({ response }) => ErrorHandler.prototype.parseBadResponse(response))
     );
   }
 
@@ -104,8 +116,8 @@ class MyQ {
       "MyQApplicationId": constants.appId,
     };
 
-    // If there's not a security token, and we're not logging in, throw an error.
-    if (!isLoginRequest && !this.securityToken) {
+    // If we aren't logged in or logging in, throw an error.
+    if (!isLoginRequest && !this.checkIsLoggedIn()) {
       return ErrorHandler.prototype.returnError(13);
     } else if (!isLoginRequest) {
       // Add our security token to the headers.
@@ -146,7 +158,7 @@ class MyQ {
         }
         this.accountId = data.Account.Id;
       })
-      .catch((error) => ErrorHandler.prototype.returnError(11, error));
+      .catch(({ response }) => ErrorHandler.prototype.parseBadResponse(response));
   }
 
   getDevices(deviceTypeParams) {
@@ -223,7 +235,7 @@ class MyQ {
         result.devices = modifiedDevices;
         return result;
       })
-      .catch(err => ErrorHandler.prototype.returnError(11, err));
+      .catch(({ response }) => ErrorHandler.prototype.parseBadResponse(response));
   }
 
   getDeviceState(serialNumber, attributeName) {
@@ -242,13 +254,7 @@ class MyQ {
         };
         return result;
       })
-      .catch(err => {
-        if (err.statusCode === 400) {
-          return ErrorHandler.prototype.returnError(15);
-        }
-
-        return ErrorHandler.prototype.returnError(11, err);
-      });
+      .catch(({ response }) => ErrorHandler.prototype.parseBadResponse(response));
   };
 
   getDoorState(serialNumber) {
@@ -263,7 +269,7 @@ class MyQ {
         delete newResult.state;
         return newResult;
       })
-      .catch(err => ErrorHandler.prototype.returnError(11, err));
+      .catch(({ response }) => ErrorHandler.prototype.parseBadResponse(response));
   }
 
   getLightState(serialNumber) {
@@ -278,7 +284,7 @@ class MyQ {
         delete newResult.state;
         return newResult;
       })
-      .catch(err => ErrorHandler.prototype.returnError(11, err));
+      .catch(({ response }) => ErrorHandler.prototype.parseBadResponse(response));
   }
 
   setDeviceState(serialNumber, action) {
@@ -308,13 +314,7 @@ class MyQ {
 
         return ErrorHandler.prototype.parseBadResponse(response);
       })
-      .catch(err => {
-        if (err.statusCode === 500) {
-          return ErrorHandler.prototype.returnError(15);
-        }
-
-        return ErrorHandler.prototype.returnError(11, err);
-      });
+      .catch(({ response }) => ErrorHandler.prototype.parseBadResponse(response));
   };
 
   setDoorOpen(serialNumber, shouldOpen) {

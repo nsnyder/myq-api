@@ -15,6 +15,7 @@ const constants = {
     17: 'User is locked out due to too many tries. Please reset password and try again.',
     18: 'The requested device could not be found.',
     19: 'Unable to determine the state of the requested device.',
+    20: 'Could not find that URL. Please file a bug report.'
   },
   doorCommands: {
     close: 'close',
@@ -44,9 +45,9 @@ const constants = {
   },
   routes: {
     account: 'My',
-    getDevices: 'Accounts/{accountId}/Devices',
+    getDevices: 'oAccounts/{accountId}/Devices',
     login: 'Login',
-    setDevice: 'Accounts/{accountId}/Devices/{serialNumber}/actions'
+    setDevice: 'oAccounts/{accountId}/Devices/{serialNumber}/actions'
   }
 };
 
