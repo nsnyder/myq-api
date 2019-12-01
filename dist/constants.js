@@ -3,8 +3,10 @@
 var constants = {
   endpointBase: 'https://api.myqdevice.com/api/v5',
   appId: 'JVM/G9Nwih5BwKgNCjLxiFUQxQijAebyyg8QUHr7JOrP+tuPb8iHfRHKwTmDzHOu',
-  userAgent: 'Chamberlain/3.73',
-  allDeviceTypes: ['hub', 'virtualgaragedooropener'],
+  allDeviceTypes: {
+    hub: 'hub',
+    garageDoorOpener: 'virtualgaragedooropener'
+  },
   errorMessages: {
     11: 'Something unexpected happened. Please wait a bit and try again.',
     12: 'MyQ service is currently down. Please wait a bit and try again.',
@@ -14,7 +16,8 @@ var constants = {
     16: 'User will be locked out due to too many tries. 1 try left.',
     17: 'User is locked out due to too many tries. Please reset password and try again.',
     18: 'The requested device could not be found.',
-    19: 'Unable to determine the state of the requested device.'
+    19: 'Unable to determine the state of the requested device.',
+    20: 'Could not find that URL. Please file a bug report.'
   },
   doorCommands: {
     close: 'close',
