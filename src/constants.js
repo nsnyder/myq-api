@@ -1,10 +1,10 @@
 const constants = {
   endpointBase: 'https://api.myqdevice.com/api/v5',
   appId: 'JVM/G9Nwih5BwKgNCjLxiFUQxQijAebyyg8QUHr7JOrP+tuPb8iHfRHKwTmDzHOu',
-  allDeviceTypes: [
-    'hub',
-    'virtualgaragedooropener',
-  ],
+  allDeviceTypes: {
+    hub: 'hub',
+    garageDoorOpener: 'virtualgaragedooropener',
+  },
   errorMessages: {
     11: 'Something unexpected happened. Please wait a bit and try again.',
     12: 'MyQ service is currently down. Please wait a bit and try again.',

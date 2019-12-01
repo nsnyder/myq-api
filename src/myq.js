@@ -22,33 +22,33 @@ ErrorHandler.prototype.returnError = (returnCode, error, response) => {
 ErrorHandler.prototype.parseBadResponse = (response) => {
   console.log(response);
   if (!response) {
-    return ErrorHandler.prototype.returnError(12, null, response);
+    return errorhandler.prototype.returnerror(12, null, response);
   }
 
   const { data, status } = response;
   if (!status) {
-    return ErrorHandler.prototype.returnError(12, null, data);
+    return errorhandler.prototype.returnerror(12, null, data);
   }
   if (status === 500) {
-    return ErrorHandler.prototype.returnError(15);
+    return errorhandler.prototype.returnerror(15);
   }
   if ([400, 401].includes(status)) {
     if (data.code === '401.205') {
-      return ErrorHandler.prototype.returnError(16, null, data);
+      return errorhandler.prototype.returnerror(16, null, data);
     }
     if (data.code === '401.207') {
-      return ErrorHandler.prototype.returnError(17, null, data);
+      return errorhandler.prototype.returnerror(17, null, data);
     }
-    return ErrorHandler.prototype.returnError(14, null, data);
+    return errorhandler.prototype.returnerror(14, null, data);
   }
   if (status === 404) {
     if (data.code === '404.401') {
-      return ErrorHandler.prototype.returnError(18, null, data);
+      return errorhandler.prototype.returnerror(18, null, data);
     }
-    return ErrorHandler.prototype.returnError(20);
+    return errorhandler.prototype.returnerror(20);
   }
 
-  return ErrorHandler.prototype.returnError(11, null, data);
+  return errorhandler.prototype.returnerror(11, null, data);
 };
 
 class MyQ {
@@ -334,4 +334,7 @@ class MyQ {
   }
 }
 
-module.exports = MyQ;
+module.exports = {
+  default: MyQ,
+  constants,
+};
