@@ -399,7 +399,4 @@ var MyQ = function () {
   return MyQ;
 }();
 
-module.exports = {
-  default: MyQ,
-  constants: constants
-};
+module.exports = MyQ;
