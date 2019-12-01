@@ -1,4 +1,7 @@
 var MyQ = require('./dist/myq');
-module.default = MyQ;
-module.myQ = MyQ;
-module.constants = require('./dist/constants')
+
+module.exports = {
+  default: MyQ,
+  myQ: MyQ,
+  constants: require('./dist/constants')
+};

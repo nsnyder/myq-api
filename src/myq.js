@@ -334,7 +334,4 @@ class MyQ {
   }
 }
 
-module.exports = {
-  default: MyQ,
-  constants,
-};
+module.exports = MyQ;
