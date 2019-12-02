@@ -21,8 +21,8 @@ Initialize credentials of the user using email and password.
 
 Example code:
 ```js
-var MyQ = require('myq-api');
-var account = new MyQ('email', 'password');
+var { myQ, constants } = require('myq-api');
+var account = new myQ('email', 'password');
 ```
 
 ### account.login()
@@ -43,21 +43,25 @@ Example returned object if call is successful:
 ```js
 {
   "returnCode": 0,
-  "token": "2sdf99a10-3190zdsv13-nn13"
+  "token": "abcd1234-a1b2-ab12-a1b2-abcdef123456"
 }
 ```
 
 ### account.getDevices(typeIds)
 
-Returns devices on the account.
+Returns devices on the account. A (very incomplete) list of possible Type names are provided as constants.
+See Possible Values for more information.
 
-| Parameter | Required | Type    | Details |
-|-----------|----------|---------|---------|
-| typeIds   | false     | Type ID | Either an array of Type IDs or a singular Type ID. See Possible Values for more info |
+| Parameter | Required | Type        | Details |
+|-----------|----------|-------------|---------|
+| typeIds   | false    | Type Name  | Either an array of Type names or a singular Type name. |
 
 Example code:
 ```js
-account.getDevices(['hub', 'virtualgaragedooropener'])
+account.getDevices([
+  constants.allDeviceTypes.hub,
+  constants.allDeviceTypes.garageDoorOpener
+])
   .then(function (result) {
     console.log(result);
   }).catch(function (err) {
@@ -214,12 +218,14 @@ Example returned object if call is successful:
 
 This is a (partial) list of the types of devices that MyQ supports.
 MyQ no longer returns on Type IDs, but rather, returns (mostly) human-readable strings.
+Constants for these are provided for your convenience.
+
 Pull requests are welcome to add other device types :)
 
-| Types                                    |
-|------------------------------------------|
-| virtualgaragedooropener                  |
-| hub                                      |
+| Constant         | Type Name                  |
+|------------------|----------------------------|
+| garageDoorOpener | virtualgaragedooropener    |
+| hub              | hub                        |
 
 | Type ID | Description                    |
 |---------|--------------------------------|
@@ -303,13 +309,11 @@ If you would like to contribute enhancements or fixes, please do the following:
 2. Make your changes.
 3. Create a pull request.
 
-## Author
+## Authors
 
-[Thomas Munduchira](https://thomasmunduchira.com/) ([thomas@thomasmunduchira.com](mailto:thomas@thomasmunduchira.com))
-
-## Original Author
-
-[Chad Smith](http://twitter.com/chadsmith) ([chad@nospam.me](mailto:chad@nospam.me))
+- [Thomas Munduchira](https://thomasmunduchira.com/) ([thomas@thomasmunduchira.com](mailto:thomas@thomasmunduchira.com))
+- [Chad Smith](http://twitter.com/chadsmith) ([chad@nospam.me](mailto:chad@nospam.me))
+- [Nathan Snyder](https://snydern.com/) ([nathan@snydern.com](mailto:nathan@snydern.com))
 
 ## License
 

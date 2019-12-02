@@ -173,7 +173,7 @@ class MyQ {
 
     // TODO: Validate device types when we have a more complete list.
     for (let deviceType in deviceTypes) {
-      if (!constants.allDeviceTypes.includes(deviceType)) {
+      if (!Object.values(constants.allDeviceTypes).includes(deviceType)) {
         // return ErrorHandler.prototype.returnError(15);
       }
     }
