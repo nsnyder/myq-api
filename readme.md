@@ -72,37 +72,23 @@ account.getDevices([
 Example returned object if call is successful:
 ```js
 {
-  "returnCode": 0,
-  "devices": [
+  returnCode: 0,
+  devices: [
     {
-      "id": 481404100,
-      "typeId": 3,
-      "typeName": "LampModule",
-      "serialNumber": "DAIIOW14411AW",
-      "online": true,
-      "name": "Light",
-      "lightState": 0,
-      "lightStateDescription": "off"
-      "lightStateUpdated": 1501609106061
+      family: 'garagedoor',
+      name: 'Garage Door Opener',
+      type: 'virtualgaragedooropener',
+      serialNumber: '123456ABCDEF',
+      online: true,
+      doorState: 'closed',
+      doorStateUpdated: '12/1/2019, 8:20:18 PM'
     },
     {
-      "id": 2323893289,
-      "typeId": 15,
-      "typeName": "Gateway WGDO AC",
-      "serialNumber": "DS4613424DJJS",
-      "online": true,
-      "name": "Home"
-    },
-    {
-      "id": 1631093013,
-      "typeId": 17,
-      "typeName": "Garage Door Opener WGDO",
-      "serialNumber": "DS4l424DJJS",
-      "online": true,
-      "name": "Garage",
-      "doorState": 1,
-      "doorStateDescription": "open"
-      "doorStateUpdated": 1501609106061
+      family: 'gateway',
+      name: 'Hub',
+      type: 'hub',
+      serialNumber: 'ABCDEF123456',
+      online: true
     }
   ]
 }
@@ -118,7 +104,7 @@ Retrieves the latest state of the requested door.
 
 Example code:
 ```js
-account.getDoorState(door.id)
+account.getDoorState(door.serialNumber)
   .then(function (result) {
     console.log(result);
   }).catch(function (err) {
@@ -130,8 +116,7 @@ Example returned object if call is successful:
 ```js
 {
   "returnCode": 0,
-  "doorState": 2, // See Possible Values
-  "doorStateDescription": "closed"
+  "doorState": "closed" // See Possible Values
 }
 ```
 
@@ -157,8 +142,7 @@ Example returned object if call is successful:
 ```js
 {
   "returnCode": 0,
-  "lightState": 1, // See Possible Values
-  "lightStateDescription": "on"
+  "lightState": "on" // See Possible Values
 }
 ```
 

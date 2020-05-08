@@ -123,9 +123,17 @@ class MyQ {
       // Add our security token to the headers.
       headers.SecurityToken = this.securityToken;
     }
+
+    let baseUrl = constants.deviceBase;
+
+    // Authentication routes need a different base URL.
+    if ([constants.routes.login, constants.routes.account].includes(route)) {
+      baseUrl = constants.authBase;
+    }
+
     let config = {
       method,
-      url: `${constants.endpointBase}/${route}`,
+      url: `${baseUrl}/${route}`,
       headers,
     };
     if (!!data) {
