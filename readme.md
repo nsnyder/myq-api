@@ -104,7 +104,7 @@ Retrieves the latest state of the requested door.
 
 Example code:
 ```js
-account.getDoorState(door.id)
+account.getDoorState(door.serialNumber)
   .then(function (result) {
     console.log(result);
   }).catch(function (err) {
@@ -116,8 +116,7 @@ Example returned object if call is successful:
 ```js
 {
   "returnCode": 0,
-  "doorState": 2, // See Possible Values
-  "doorStateDescription": "closed"
+  "doorState": "closed" // See Possible Values
 }
 ```
 
@@ -143,8 +142,7 @@ Example returned object if call is successful:
 ```js
 {
   "returnCode": 0,
-  "lightState": 1, // See Possible Values
-  "lightStateDescription": "on"
+  "lightState": "on" // See Possible Values
 }
 ```
 
