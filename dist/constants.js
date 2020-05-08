@@ -1,7 +1,11 @@
 'use strict';
 
+var authVersion = 'v5';
+var deviceVersion = 'v5.1';
+
 var constants = {
-  endpointBase: 'https://api.myqdevice.com/api/v5',
+  authBase: 'https://api.myqdevice.com/api/' + authVersion,
+  deviceBase: 'https://api.myqdevice.com/api/' + deviceVersion,
   appId: 'JVM/G9Nwih5BwKgNCjLxiFUQxQijAebyyg8QUHr7JOrP+tuPb8iHfRHKwTmDzHOu',
   allDeviceTypes: {
     hub: 'hub',

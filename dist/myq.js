@@ -140,9 +140,17 @@ var MyQ = function () {
         // Add our security token to the headers.
         headers.SecurityToken = this.securityToken;
       }
+
+      var baseUrl = constants.deviceBase;
+
+      // Authentication routes need a different base URL.
+      if ([constants.routes.login, constants.routes.account].includes(route)) {
+        baseUrl = constants.authBase;
+      }
+
       var config = {
         method: method,
-        url: constants.endpointBase + '/' + route,
+        url: baseUrl + '/' + route,
         headers: headers
       };
       if (!!data) {
