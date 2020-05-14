@@ -146,18 +146,18 @@ Example returned object if call is successful:
 }
 ```
 
-### account.setDoorState(id, toggle)
+### account.setDoorOpen(serialNumber, shouldOpen)
 
 Set the requested door to open or close. Returns a confirmation once complete. Note that the door might not be opened or closed fully by the time this function returns.
 
-| Parameter | Required | Type        | Details                           |
-|-----------|----------|-------------|-----------------------------------|
-| id        | true     | Integer     | Door ID                           |
-| toggle    | true     | Door Toggle | See Possible Values for more info |
+| Parameter    | Required | Type        | Details                           |
+|--------------|----------|-------------|-----------------------------------|
+| serialNumber | true     | String      | Serial number of the device       |
+| toggle       | true     | Boolean     | true or false                     |
 
 Example code:
 ```js
-account.setDoorState(door.id, 1)
+account.setDoorState(door.serialNumber, true)
   .then(function (result) {
     console.log(result);
   }).catch(function (err) {
@@ -183,7 +183,7 @@ Set the requested light to on or off. Returns a confirmation once complete.
 
 Example code:
 ```js
-account.setLightState(light.id, 1)
+account.setLightState(light.serialNumber, 1)
   .then(function (result) {
     console.log(result);
   }).catch(function (err) {
@@ -226,8 +226,8 @@ Pull requests are welcome to add other device types :)
 
 | Door Toggle | Description |
 |-------------|-------------|
-| 0           | close door  |
-| 1           | open door   |
+| false       | close door  |
+| true        | open door   |
 
 | doorState | Description           |
 |-----------|-----------------------|

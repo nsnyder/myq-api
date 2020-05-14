@@ -327,7 +327,10 @@ class MyQ {
 
   setDoorOpen(serialNumber, shouldOpen) {
     let action = constants.doorCommands.close;
-    if (shouldOpen) {
+
+    // Take a precaution and check against the string "false" so
+    // that someone doesn't inadvertently open their garage.
+    if (shouldOpen && shouldOpen !== 'false') {
       action = constants.doorCommands.open;
     }
     return this.setDeviceState(serialNumber, action);
