@@ -56,12 +56,12 @@ account.login()
   .then(function (doors) {
     data.doors = doors;
     console.log('\nClosing first door');
-    return account.setDoorState(doors[0].serialNumber, 0);
+    return account.setDoorOpen(doors[0].serialNumber, false);
   })
   .then(function (result) {
-    console.log('setDoorState result:', result);
+    console.log('setDoorOpen result:', result);
     if (result.returnCode !== 0) {
-      throw new Error('setDoorState unsuccessful!');
+      throw new Error('setDoorOpen unsuccessful!');
     }
   })
   .then(function () {
