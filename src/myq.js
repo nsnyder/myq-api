@@ -3,7 +3,7 @@ const axios = require('axios');
 
 const constants = require('./constants');
 
-class ErrorHandler {};
+class ErrorHandler {}
 ErrorHandler.prototype.returnError = (returnCode, error, response) => {
   const result = {
     returnCode,
@@ -19,36 +19,35 @@ ErrorHandler.prototype.returnError = (returnCode, error, response) => {
   }
   return Promise.resolve(result);
 };
-ErrorHandler.prototype.parseBadResponse = (response) => {
-  console.log(response);
+ErrorHandler.prototype.parseBadResponse = response => {
   if (!response) {
-    return errorhandler.prototype.returnerror(12, null, response);
+    return ErrorHandler.prototype.returnerror(12, null, response);
   }
 
   const { data, status } = response;
   if (!status) {
-    return errorhandler.prototype.returnerror(12, null, data);
+    return ErrorHandler.prototype.returnerror(12, null, data);
   }
   if (status === 500) {
-    return errorhandler.prototype.returnerror(15);
+    return ErrorHandler.prototype.returnerror(15);
   }
   if ([400, 401].includes(status)) {
     if (data.code === '401.205') {
-      return errorhandler.prototype.returnerror(16, null, data);
+      return ErrorHandler.prototype.returnerror(16, null, data);
     }
     if (data.code === '401.207') {
-      return errorhandler.prototype.returnerror(17, null, data);
+      return ErrorHandler.prototype.returnerror(17, null, data);
     }
-    return errorhandler.prototype.returnerror(14, null, data);
+    return ErrorHandler.prototype.returnerror(14, null, data);
   }
   if (status === 404) {
     if (data.code === '404.401') {
-      return errorhandler.prototype.returnerror(18, null, data);
+      return ErrorHandler.prototype.returnerror(18, null, data);
     }
-    return errorhandler.prototype.returnerror(20);
+    return ErrorHandler.prototype.returnerror(20);
   }
 
-  return errorhandler.prototype.returnerror(11, null, data);
+  return ErrorHandler.prototype.returnerror(11, null, data);
 };
 
 class MyQ {
@@ -66,15 +65,10 @@ class MyQ {
     }
 
     return Promise.resolve(
-      this.executeRequest(
-        constants.routes.login,
-        'post',
-        null,
-        {
-          Username: this.username,
-          Password: this.password,
-        }
-      )
+      this.executeRequest(constants.routes.login, 'post', null, {
+        Username: this.username,
+        Password: this.password,
+      })
         .then(originalResponse => {
           const { response, returnCode } = originalResponse;
           if (returnCode !== 0) {
@@ -85,9 +79,13 @@ class MyQ {
           }
 
           const { data } = response;
+          let token;
+          if (data) {
+            token = data.SecurityToken;
+          }
+
           switch (response.status) {
             case 200:
-              const token = data.SecurityToken;
               if (!token) {
                 return ErrorHandler.prototype.returnError(11);
               }
@@ -110,10 +108,10 @@ class MyQ {
   }
 
   executeRequest(route, method, params, data) {
-    let isLoginRequest = route === constants.routes.login;
-    let headers = {
-      "Content-Type": "application/json",
-      "MyQApplicationId": constants.appId,
+    const isLoginRequest = route === constants.routes.login;
+    const headers = {
+      'Content-Type': 'application/json',
+      MyQApplicationId: constants.appId,
     };
 
     // If we aren't logged in or logging in, throw an error.
@@ -131,33 +129,28 @@ class MyQ {
       baseUrl = constants.authBase;
     }
 
-    let config = {
+    const config = {
       method,
       url: `${baseUrl}/${route}`,
       headers,
     };
-    if (!!data) {
+    if (data) {
       config.data = data;
     }
-    if (!!params) {
+    if (params) {
       config.params = params;
     }
 
-    return Promise.resolve(axios(config))
-      .then(response => ({
-        returnCode: 0,
-        response,
-      }));
+    return Promise.resolve(axios(config)).then(response => ({
+      returnCode: 0,
+      response,
+    }));
   }
 
   getAccountInfo() {
-    return this.executeRequest(
-      constants.routes.account,
-      'get',
-      { expand: 'account' }
-    )
+    return this.executeRequest(constants.routes.account, 'get', { expand: 'account' })
       .then(returnValue => {
-        if (returnValue.returnCode !== 0 && typeof(returnValue.returnCode) !== 'undefined') {
+        if (returnValue.returnCode !== 0 && typeof returnValue.returnCode !== 'undefined') {
           return returnValue;
         }
         const { data } = returnValue.response;
@@ -165,6 +158,8 @@ class MyQ {
           return ErrorHandler.prototype.returnError(11);
         }
         this.accountId = data.Account.Id;
+
+        return this;
       })
       .catch(({ response }) => ErrorHandler.prototype.parseBadResponse(response));
   }
@@ -175,28 +170,33 @@ class MyQ {
       promise = Promise.resolve(this.getAccountInfo());
     }
 
-    const deviceTypes = !deviceTypeParams ?
-      [] :
-      (Array.isArray(deviceTypeParams) ? deviceTypeParams : [deviceTypeParams]);
+    let deviceTypes = [];
+    if (deviceTypeParams) {
+      deviceTypes = Array.isArray(deviceTypeParams) ? deviceTypeParams : [deviceTypeParams];
+    }
 
     // TODO: Validate device types when we have a more complete list.
-    for (let deviceType in deviceTypes) {
+    Object.values(deviceTypes).forEach(deviceType => {
       if (!Object.values(constants.allDeviceTypes).includes(deviceType)) {
         // return ErrorHandler.prototype.returnError(15);
       }
-    }
+    });
 
     return promise
-      .then(() => this.executeRequest(
-        `${constants.routes.getDevices.replace('{accountId}', this.accountId)}`,
-        'get'
-      ))
+      .then(() =>
+        this.executeRequest(
+          `${constants.routes.getDevices.replace('{accountId}', this.accountId)}`,
+          'get'
+        )
+      )
       .then(returnValue => {
-        if (returnValue.returnCode !== 0 && typeof(returnValue.returnCode) !== 'undefined') {
+        if (returnValue.returnCode !== 0 && typeof returnValue.returnCode !== 'undefined') {
           return returnValue;
         }
 
-        const { response: { data, status } } = returnValue;
+        const {
+          response: { data, status },
+        } = returnValue;
         if (![200, 204].includes(status)) {
           return ErrorHandler.prototype.parseBadResponse(returnValue.response);
         }
@@ -216,7 +216,7 @@ class MyQ {
         };
 
         const modifiedDevices = [];
-        for (const device of devices) {
+        Object.values(devices).forEach(device => {
           const modifiedDevice = {
             family: device.device_family,
             name: device.name,
@@ -224,7 +224,7 @@ class MyQ {
             serialNumber: device.serial_number,
           };
 
-          const state = device.state;
+          const { state } = device;
           if (constants.myQProperties.online in state) {
             modifiedDevice.online = state[constants.myQProperties.online];
           }
@@ -240,7 +240,8 @@ class MyQ {
           }
 
           modifiedDevices.push(modifiedDevice);
-        }
+        });
+
         result.devices = modifiedDevices;
         return result;
       })
@@ -250,7 +251,7 @@ class MyQ {
   getDeviceState(serialNumber, attributeName) {
     return this.getDevices()
       .then(response => {
-        const device = (response.devices || []).find(device => device.serialNumber === serialNumber);
+        const device = (response.devices || []).find(d => d.serialNumber === serialNumber);
         if (!device) {
           return ErrorHandler.prototype.returnError(18);
         } else if (!(attributeName in device)) {
@@ -264,7 +265,7 @@ class MyQ {
         return result;
       })
       .catch(({ response }) => ErrorHandler.prototype.parseBadResponse(response));
-  };
+  }
 
   getDoorState(serialNumber) {
     return this.getDeviceState(serialNumber, 'doorState')
@@ -303,15 +304,19 @@ class MyQ {
     }
 
     return promise
-      .then(() => this.executeRequest(
-        `${constants.routes.setDevice.replace('{accountId}', this.accountId).replace('{serialNumber}', serialNumber)}`,
-        'put',
-        null,
-        { action_type: action }
-      ))
+      .then(() =>
+        this.executeRequest(
+          `${constants.routes.setDevice
+            .replace('{accountId}', this.accountId)
+            .replace('{serialNumber}', serialNumber)}`,
+          'put',
+          null,
+          { action_type: action }
+        )
+      )
       .then(returnValue => {
         const { returnCode, response } = returnValue;
-        if (returnCode !== 0 && typeof(returnCode) !== 'undefined') {
+        if (returnCode !== 0 && typeof returnCode !== 'undefined') {
           return returnValue;
         }
 
@@ -324,7 +329,7 @@ class MyQ {
         return ErrorHandler.prototype.parseBadResponse(response);
       })
       .catch(({ response }) => ErrorHandler.prototype.parseBadResponse(response));
-  };
+  }
 
   setDoorOpen(serialNumber, shouldOpen) {
     let action = constants.doorCommands.close;
