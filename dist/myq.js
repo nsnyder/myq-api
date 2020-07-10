@@ -13,7 +13,6 @@ var ErrorHandler = function ErrorHandler() {
   _classCallCheck(this, ErrorHandler);
 };
 
-;
 ErrorHandler.prototype.returnError = function (returnCode, error, response) {
   var result = {
     returnCode: returnCode,
@@ -30,37 +29,36 @@ ErrorHandler.prototype.returnError = function (returnCode, error, response) {
   return Promise.resolve(result);
 };
 ErrorHandler.prototype.parseBadResponse = function (response) {
-  console.log(response);
   if (!response) {
-    return errorhandler.prototype.returnerror(12, null, response);
+    return ErrorHandler.prototype.returnerror(12, null, response);
   }
 
   var data = response.data,
       status = response.status;
 
   if (!status) {
-    return errorhandler.prototype.returnerror(12, null, data);
+    return ErrorHandler.prototype.returnerror(12, null, data);
   }
   if (status === 500) {
-    return errorhandler.prototype.returnerror(15);
+    return ErrorHandler.prototype.returnerror(15);
   }
   if ([400, 401].includes(status)) {
     if (data.code === '401.205') {
-      return errorhandler.prototype.returnerror(16, null, data);
+      return ErrorHandler.prototype.returnerror(16, null, data);
     }
     if (data.code === '401.207') {
-      return errorhandler.prototype.returnerror(17, null, data);
+      return ErrorHandler.prototype.returnerror(17, null, data);
     }
-    return errorhandler.prototype.returnerror(14, null, data);
+    return ErrorHandler.prototype.returnerror(14, null, data);
   }
   if (status === 404) {
     if (data.code === '404.401') {
-      return errorhandler.prototype.returnerror(18, null, data);
+      return ErrorHandler.prototype.returnerror(18, null, data);
     }
-    return errorhandler.prototype.returnerror(20);
+    return ErrorHandler.prototype.returnerror(20);
   }
 
-  return errorhandler.prototype.returnerror(11, null, data);
+  return ErrorHandler.prototype.returnerror(11, null, data);
 };
 
 var MyQ = function () {
@@ -99,9 +97,13 @@ var MyQ = function () {
 
         var data = response.data;
 
+        var token = void 0;
+        if (data) {
+          token = data.SecurityToken;
+        }
+
         switch (response.status) {
           case 200:
-            var token = data.SecurityToken;
             if (!token) {
               return ErrorHandler.prototype.returnError(11);
             }
@@ -129,8 +131,8 @@ var MyQ = function () {
     value: function executeRequest(route, method, params, data) {
       var isLoginRequest = route === constants.routes.login;
       var headers = {
-        "Content-Type": "application/json",
-        "MyQApplicationId": constants.appId
+        'Content-Type': 'application/json',
+        MyQApplicationId: constants.appId
       };
 
       // If we aren't logged in or logging in, throw an error.
@@ -153,10 +155,10 @@ var MyQ = function () {
         url: baseUrl + '/' + route,
         headers: headers
       };
-      if (!!data) {
+      if (data) {
         config.data = data;
       }
-      if (!!params) {
+      if (params) {
         config.params = params;
       }
 
@@ -182,6 +184,8 @@ var MyQ = function () {
           return ErrorHandler.prototype.returnError(11);
         }
         _this2.accountId = data.Account.Id;
+
+        return _this2;
       }).catch(function (_ref2) {
         var response = _ref2.response;
         return ErrorHandler.prototype.parseBadResponse(response);
@@ -199,14 +203,17 @@ var MyQ = function () {
         promise = Promise.resolve(this.getAccountInfo());
       }
 
-      var deviceTypes = !deviceTypeParams ? [] : Array.isArray(deviceTypeParams) ? deviceTypeParams : [deviceTypeParams];
+      var deviceTypes = [];
+      if (deviceTypeParams) {
+        deviceTypes = Array.isArray(deviceTypeParams) ? deviceTypeParams : [deviceTypeParams];
+      }
 
       // TODO: Validate device types when we have a more complete list.
-      for (var deviceType in deviceTypes) {
+      Object.values(deviceTypes).forEach(function (deviceType) {
         if (!Object.values(constants.allDeviceTypes).includes(deviceType)) {
           // return ErrorHandler.prototype.returnError(15);
         }
-      }
+      });
 
       return promise.then(function () {
         return _this3.executeRequest('' + constants.routes.getDevices.replace('{accountId}', _this3.accountId), 'get');
@@ -228,6 +235,7 @@ var MyQ = function () {
           return ErrorHandler.prototype.returnError(11);
         }
 
+        // Filter device types if requested.
         if (deviceTypes.length) {
           devices = devices.filter(function (device) {
             return deviceTypes.includes(device.device_type);
@@ -239,52 +247,32 @@ var MyQ = function () {
         };
 
         var modifiedDevices = [];
-        var _iteratorNormalCompletion = true;
-        var _didIteratorError = false;
-        var _iteratorError = undefined;
+        Object.values(devices).forEach(function (device) {
+          var modifiedDevice = {
+            family: device.device_family,
+            name: device.name,
+            type: device.device_type,
+            serialNumber: device.serial_number
+          };
 
-        try {
-          for (var _iterator = devices[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-            var device = _step.value;
+          var state = device.state;
 
-            var modifiedDevice = {
-              family: device.device_family,
-              name: device.name,
-              type: device.device_type,
-              serialNumber: device.serial_number
-            };
-
-            var state = device.state;
-            if (constants.myQProperties.online in state) {
-              modifiedDevice.online = state[constants.myQProperties.online];
-            }
-            if (constants.myQProperties.doorState in state) {
-              modifiedDevice.doorState = state[constants.myQProperties.doorState];
-              var date = new Date(state[constants.myQProperties.lastUpdate]);
-              modifiedDevice.doorStateUpdated = date.toLocaleString();
-            }
-            if (constants.myQProperties.lightState in state) {
-              modifiedDevice.lightState = state[constants.myQProperties.lightState];
-              var _date = new Date(state[constants.myQProperties.lastUpdate]);
-              modifiedDevice.lightStateUpdated = _date.toLocaleString();
-            }
-
-            modifiedDevices.push(modifiedDevice);
+          if (constants.myQProperties.online in state) {
+            modifiedDevice.online = state[constants.myQProperties.online];
           }
-        } catch (err) {
-          _didIteratorError = true;
-          _iteratorError = err;
-        } finally {
-          try {
-            if (!_iteratorNormalCompletion && _iterator.return) {
-              _iterator.return();
-            }
-          } finally {
-            if (_didIteratorError) {
-              throw _iteratorError;
-            }
+          if (constants.myQProperties.doorState in state) {
+            modifiedDevice.doorState = state[constants.myQProperties.doorState];
+            var date = new Date(state[constants.myQProperties.lastUpdate]);
+            modifiedDevice.doorStateUpdated = date.toLocaleString();
           }
-        }
+          if (constants.myQProperties.lightState in state) {
+            modifiedDevice.lightState = state[constants.myQProperties.lightState];
+            var _date = new Date(state[constants.myQProperties.lastUpdate]);
+            modifiedDevice.lightStateUpdated = _date.toLocaleString();
+          }
+
+          modifiedDevices.push(modifiedDevice);
+        });
 
         result.devices = modifiedDevices;
         return result;
@@ -297,8 +285,8 @@ var MyQ = function () {
     key: 'getDeviceState',
     value: function getDeviceState(serialNumber, attributeName) {
       return this.getDevices().then(function (response) {
-        var device = (response.devices || []).find(function (device) {
-          return device.serialNumber === serialNumber;
+        var device = (response.devices || []).find(function (d) {
+          return d.serialNumber === serialNumber;
         });
         if (!device) {
           return ErrorHandler.prototype.returnError(18);
