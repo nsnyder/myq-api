@@ -206,6 +206,7 @@ class MyQ {
           return ErrorHandler.prototype.returnError(11);
         }
 
+        // Filter device types if requested.
         if (deviceTypes.length) {
           devices = devices.filter(device => deviceTypes.includes(device.device_type));
         }

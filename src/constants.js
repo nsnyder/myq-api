@@ -7,7 +7,9 @@ const constants = {
   appId: 'JVM/G9Nwih5BwKgNCjLxiFUQxQijAebyyg8QUHr7JOrP+tuPb8iHfRHKwTmDzHOu',
   allDeviceTypes: {
     hub: 'hub',
-    garageDoorOpener: 'virtualgaragedooropener',
+    virtualGarageDoorOpener: 'virtualgaragedooropener',
+    wifiGarageDoorOpener: 'wifigaragedooropener',
+    wifiGdoGateway: 'wifigdogateway',
   },
   errorMessages: {
     11: 'Something unexpected happened. Please wait a bit and try again.',

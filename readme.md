@@ -58,9 +58,11 @@ See Possible Values for more information.
 
 Example code:
 ```js
+// Optionally, pass in device types to filter them.
+// If none are specified, all devices will be returned.
 account.getDevices([
   constants.allDeviceTypes.hub,
-  constants.allDeviceTypes.garageDoorOpener
+  constants.allDeviceTypes.virtualGarageDoorOpener
 ])
   .then(function (result) {
     console.log(result);
@@ -206,10 +208,12 @@ Constants for these are provided for your convenience.
 
 Pull requests are welcome to add other device types :)
 
-| Constant         | Type Name                  |
-|------------------|----------------------------|
-| garageDoorOpener | virtualgaragedooropener    |
-| hub              | hub                        |
+| Constant                | Type Name                  |
+|-------------------------|----------------------------|
+| hub                     | hub                        |
+| virtualGarageDoorOpener | virtualgaragedooropener    |
+| wifiGarageDoorOpener    | wifigaragedooropener       |
+| wifiGdoGateway          | wifigdogateway             |
 
 | Type ID | Description                    |
 |---------|--------------------------------|
